@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// =========================================================================
+// PATRÓN BACKEND FOR FRONTEND (BFF) - CANAL WEB:
+// Responsabilidad exclusiva: Agregar datos complejos (cuentas + transacciones +
+// movimientos anuales + metadatos) para alimentar dashboards de navegador.
+// =========================================================================
 @Service
 public class WebBffService {
 
@@ -32,7 +37,9 @@ public class WebBffService {
         long sobregiro = cuenta.getLineaSobregiro() != null ? cuenta.getLineaSobregiro() : 0L;
         long saldoTotal = cuenta.getSaldo() + sobregiro;
         double tasa = cuenta.getTasaInteres() != null ? cuenta.getTasaInteres() : 0.0;
-        double interesEstimado = Math.round((cuenta.getSaldo() * (tasa / 100.0) / 12.0) * 100.0) / 100.0;
+        
+        // Delegación del cálculo financiero al dominio (BancoService)
+        double interesEstimado = bancoService.calcularInteresMensualEstimado(cuenta);
 
         List<MovimientoAnual> anuales = bancoService.obtenerMovimientosAnuales(cuentaId);
 

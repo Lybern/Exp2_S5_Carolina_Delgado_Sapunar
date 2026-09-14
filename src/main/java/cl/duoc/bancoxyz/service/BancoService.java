@@ -35,6 +35,60 @@ public class BancoService {
         return bancoRepository.buscarMovimientosAnualesPorCuenta(cuentaId);
     }
 
+    // =========================================================================
+    // CAPA DE DOMINIO BANCARIO (CORE BANKING DOMAIN):
+    // Responsabilidad: Encapsular y ejecutar las reglas de negocio financieras
+    // independientemente del canal de acceso (Web, Móvil o ATM).
+    // =========================================================================
+
+    /**
+     * Calcula el monto máximo disponible para retiro según el saldo y las políticas del cajero.
+     */
+    public long calcularLimiteGiroATM(Long cuentaId, long limiteMaximoGiro) {
+        Cuenta cuenta = obtenerCuentaPorId(cuentaId)
+                .orElseThrow(() -> new IllegalArgumentException("Tarjeta o cuenta no válida: " + cuentaId));
+        long saldo = cuenta.getSaldo() != null ? cuenta.getSaldo() : 0L;
+        return Math.min(saldo, limiteMaximoGiro);
+    }
+
+    /**
+     * Calcula la estimación mensual de intereses ganados según la tasa pactada de la cuenta.
+     */
+    public double calcularInteresMensualEstimado(Cuenta cuenta) {
+        if (cuenta == null || cuenta.getSaldo() == null || cuenta.getTasaInteres() == null) {
+            return 0.0;
+        }
+        double tasa = cuenta.getTasaInteres();
+        return Math.round((cuenta.getSaldo() * (tasa / 100.0) / 12.0) * 100.0) / 100.0;
+    }
+
+    /**
+     * Procesa retiros bancarios para el canal de cajeros automáticos (ATM),
+     * validando reglas financieras (múltiplos de dispensación y topes de seguridad).
+     */
+    public synchronized Transaccion procesarRetiroATM(Long cuentaId, Long monto, String pin, String terminalId, long limiteMaximo, long multiploBillete) {
+        if (monto == null || monto <= 0) {
+            throw new IllegalArgumentException("El monto a retirar debe ser mayor a $0.");
+        }
+
+        // Regla bancaria: Los cajeros solo pueden dispensar denominaciones válidas
+        if (multiploBillete > 0 && monto % multiploBillete != 0) {
+            throw new IllegalArgumentException("El monto solicitado ($" + monto + ") debe ser múltiplo de $" + multiploBillete + " (denominaciones de billetes válidas).");
+        }
+
+        // Regla bancaria: Límite máximo operativo por giro en cajero
+        if (limiteMaximo > 0 && monto > limiteMaximo) {
+            throw new IllegalArgumentException("El monto solicitado ($" + monto + ") supera el límite máximo por giro en cajero ($" + limiteMaximo + ").");
+        }
+
+        return procesarRetiro(
+                cuentaId,
+                monto,
+                "CAJERO_ATM",
+                "Giro ATM Terminal " + (terminalId != null ? terminalId : "ATM-GENERIC")
+        );
+    }
+
     public synchronized Transaccion procesarRetiro(Long cuentaId, Long monto, String canal, String detalleTerminal) {
         if (monto == null || monto <= 0) {
             throw new IllegalArgumentException("El monto a retirar debe ser mayor a $0.");
