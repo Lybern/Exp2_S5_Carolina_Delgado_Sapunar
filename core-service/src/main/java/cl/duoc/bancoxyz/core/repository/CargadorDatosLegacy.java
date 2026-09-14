@@ -30,11 +30,24 @@ public class CargadorDatosLegacy {
     @PostConstruct
     public void cargarDatos() {
         log.info("[CORE] Iniciando carga de datos legacy del Banco XYZ...");
+
+        // Cuentas demo principales
+        bancoRepository.guardarCuenta(new Cuenta(1L, "Carolina Delgado", 1500000L, 25, "cuenta_corriente", 300000L, 0.5, "ACTIVA"));
+        bancoRepository.guardarCuenta(new Cuenta(2L, "Juan Perez", 850000L, 35, "cuenta_ahorro", 0L, 3.8, "ACTIVA"));
+        bancoRepository.guardarCuenta(new Cuenta(3L, "Maria Gonzalez", 2400000L, 42, "cuenta_corriente", 500000L, 0.5, "ACTIVA"));
+        bancoRepository.guardarCuenta(new Cuenta(10002L, "Cuenta Destino Demo", 500000L, 30, "cuenta_vista", 0L, 0.0, "ACTIVA"));
+
+        // Transacciones demo para cuenta 1
+        bancoRepository.guardarTransaccion(new Transaccion(1L, 1L, LocalDate.now().minusDays(1), 25000L, "debito", "Compra en supermercado", "POS"));
+        bancoRepository.guardarTransaccion(new Transaccion(2L, 1L, LocalDate.now().minusDays(2), 150000L, "credito", "Deposito de sueldo", "TRANSFERENCIA"));
+        bancoRepository.guardarTransaccion(new Transaccion(3L, 1L, LocalDate.now().minusDays(5), 10000L, "debito", "Pago servicio basico", "WEB"));
+
         cargarCuentas();
         cargarTransacciones();
         cargarCuentasAnuales();
         log.info("[CORE] Datos cargados exitosamente. Total cuentas registradas: {}", bancoRepository.obtenerTodasLasCuentas().size());
     }
+
 
     private void cargarCuentas() {
         try {

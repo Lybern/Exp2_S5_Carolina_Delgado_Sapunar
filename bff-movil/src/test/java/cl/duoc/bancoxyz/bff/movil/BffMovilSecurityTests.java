@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 @SpringBootTest
 class BffMovilSecurityTests {
 
+
     @Autowired
     private AuthController authController;
 
@@ -51,4 +52,28 @@ class BffMovilSecurityTests {
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+
+    @Test
+    @DisplayName("Validar claims y rol desde token")
+    void validarTokenClaims() {
+        LoginRequestDto req = new LoginRequestDto("usuario_movil", "movil123");
+        ResponseEntity<?> resp = authController.login(req);
+        LoginResponseDto body = (LoginResponseDto) resp.getBody();
+
+        String token = body.getToken();
+        String username = jwtTokenUtil.getUsernameFromToken(token);
+        String rol = jwtTokenUtil.getRoleFromToken(token);
+        Claims claims = jwtTokenUtil.getClaimsFromToken(token);
+
+        System.out.println("DEBUG USERNAME: " + username);
+        System.out.println("DEBUG ROL: " + rol);
+        System.out.println("DEBUG AUD: " + claims.getAudience());
+        System.out.println("DEBUG AUD CLASS: " + (claims.getAudience() != null ? claims.getAudience().getClass() : "null"));
+
+        assertThat(username).isEqualTo("usuario_movil");
+        assertThat(rol).isEqualTo("ROLE_MOVIL");
+        assertThat(claims.getAudience()).contains("MOVIL");
+    }
 }
+
+

@@ -10,16 +10,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtTokenUtil jwtTokenUtil;
 
     public JwtAuthenticationFilter(JwtTokenUtil jwtTokenUtil) {
@@ -49,9 +50,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.info("[BFF-WEB-AUTH] Usuario '{}' autenticado con exito con rol '{}'", username, rol);
+                    } else {
+                        log.warn("[BFF-WEB-AUTH] Token no paso validacion para usuario '{}'", username);
                     }
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("[BFF-WEB-AUTH] Error procesando JWT: {}", e.getMessage());
                 SecurityContextHolder.clearContext();
             }
         }
@@ -59,3 +64,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+
