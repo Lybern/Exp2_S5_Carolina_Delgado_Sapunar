@@ -16,7 +16,17 @@ public class BancoRepository {
     private final Map<Long, Cuenta> cuentas = new ConcurrentHashMap<>();
     private final List<Transaccion> transacciones = Collections.synchronizedList(new ArrayList<>());
     private final List<MovimientoAnual> movimientosAnuales = Collections.synchronizedList(new ArrayList<>());
-    private final AtomicLong correlativoTransaccion = new AtomicLong(5000);
+
+    // =========================================================================
+    // GENERACIÓN CONCURRENTE Y DETERMINISTA DE IDENTIFICADORES:
+    // AtomicLong garantiza atomicidad e incrementos seguros libres de condición
+    // de carrera (thread-safe), evitando colisiones de IDs bancarios en memoria.
+    // =========================================================================
+    private final AtomicLong correlativoTransaccion = new AtomicLong(50000L);
+
+    public Long generarSiguienteIdTransaccion() {
+        return correlativoTransaccion.incrementAndGet();
+    }
 
     public void guardarCuenta(Cuenta cuenta) {
         cuentas.put(cuenta.getCuentaId(), cuenta);
@@ -33,6 +43,9 @@ public class BancoRepository {
     public void guardarTransaccion(Transaccion transaccion) {
         if (transaccion.getId() == null) {
             transaccion.setId(correlativoTransaccion.incrementAndGet());
+        } else {
+            // Asegura que el contador secuencial se mantenga por encima de los IDs importados del CSV
+            correlativoTransaccion.updateAndGet(actual -> Math.max(actual, transaccion.getId()));
         }
         transacciones.add(transaccion);
     }

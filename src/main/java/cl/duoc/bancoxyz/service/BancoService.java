@@ -104,8 +104,11 @@ public class BancoService {
 
         cuenta.setSaldo(cuenta.getSaldo() - monto);
 
+        // Generación determinista y concurrente de identificador único con AtomicLong
+        Long nuevoIdTransaccion = bancoRepository.generarSiguienteIdTransaccion();
+
         Transaccion tx = new Transaccion(
-                System.currentTimeMillis() % 1000000L,
+                nuevoIdTransaccion,
                 cuentaId,
                 LocalDate.now().toString(),
                 monto,
@@ -128,8 +131,11 @@ public class BancoService {
 
         cuenta.setSaldo(cuenta.getSaldo() + monto);
 
+        // Generación segura de ID sin colisión por milisegundos
+        Long nuevoIdTransaccion = bancoRepository.generarSiguienteIdTransaccion();
+
         Transaccion tx = new Transaccion(
-                System.currentTimeMillis() % 1000000L,
+                nuevoIdTransaccion,
                 cuentaId,
                 LocalDate.now().toString(),
                 monto,
@@ -165,8 +171,12 @@ public class BancoService {
         origen.setSaldo(origen.getSaldo() - monto);
         destino.setSaldo(destino.getSaldo() + monto);
 
+        // Generación de IDs secuenciales y atómicos para el par de transacciones contables
+        Long idTxOrigen = bancoRepository.generarSiguienteIdTransaccion();
+        Long idTxDestino = bancoRepository.generarSiguienteIdTransaccion();
+
         Transaccion txOrigen = new Transaccion(
-                System.currentTimeMillis() % 1000000L,
+                idTxOrigen,
                 cuentaOrigenId,
                 LocalDate.now().toString(),
                 monto,
@@ -177,7 +187,7 @@ public class BancoService {
         bancoRepository.guardarTransaccion(txOrigen);
 
         Transaccion txDestino = new Transaccion(
-                (System.currentTimeMillis() + 1) % 1000000L,
+                idTxDestino,
                 cuentaDestinoId,
                 LocalDate.now().toString(),
                 monto,
