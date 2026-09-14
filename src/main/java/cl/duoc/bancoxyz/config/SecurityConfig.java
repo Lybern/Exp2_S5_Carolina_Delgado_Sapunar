@@ -89,7 +89,7 @@ public class SecurityConfig {
         // Usuario exclusivo para App Móvil
         UserDetails userMovil = User.withUsername("usuario_movil")
                 .password(passwordEncoder.encode("movil123"))
-                .roles("MOVIL", "CLIENTE")
+                .roles("MOVIL")
                 .build();
 
         // Terminal / Operador exclusivo para Cajero Automático (ATM)
