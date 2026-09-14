@@ -6,13 +6,23 @@ import cl.duoc.bancoxyz.bff.movil.dto.TransaccionMovilDto;
 import cl.duoc.bancoxyz.model.Cuenta;
 import cl.duoc.bancoxyz.model.Transaccion;
 import cl.duoc.bancoxyz.service.BancoService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+// =========================================================================
+// PATRÓN BACKEND FOR FRONTEND (BFF) - CANAL MÓVIL:
+// Responsabilidad exclusiva: Entregar respuestas ultraligeras y optimizadas
+// para reducir consumo de datos móviles y latencia en smartphones.
+// =========================================================================
 @Service
 public class MovilBffService {
+
+    // Límite de transacciones configurable para mantener el payload móvil compacto
+    @Value("${banco.movil.limite-transacciones-resumen:3}")
+    private int limiteTransaccionesResumen;
 
     private final BancoService bancoService;
 
@@ -25,7 +35,7 @@ public class MovilBffService {
                 .orElseThrow(() -> new IllegalArgumentException("Cuenta no encontrada con ID: " + cuentaId));
 
         List<TransaccionMovilDto> ultimosMovimientos = bancoService.obtenerTransaccionesPorCuenta(cuentaId).stream()
-                .limit(3)
+                .limit(limiteTransaccionesResumen)
                 .map(this::convertirTransaccionMovil)
                 .collect(Collectors.toList());
 

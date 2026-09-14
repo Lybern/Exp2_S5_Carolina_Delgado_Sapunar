@@ -6,6 +6,7 @@ import cl.duoc.bancoxyz.bff.cajero.dto.SolicitudRetiroCajeroDto;
 import cl.duoc.bancoxyz.model.Cuenta;
 import cl.duoc.bancoxyz.model.Transaccion;
 import cl.duoc.bancoxyz.service.BancoService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.text.NumberFormat;
@@ -20,8 +21,16 @@ import java.util.UUID;
 @Service
 public class CajeroBffService {
 
-    private static final long LIMITE_GIRO_ATM = 200000L;
-    private static final long MULTIPLO_BILLETE = 5000L;
+    // =========================================================================
+    // EXTERNALIZACIÓN DE LÍMITES OPERATIVOS (application.properties):
+    // Se inyectan con @Value permitiendo cambiar políticas de giro o denominación
+    // de billetes en producción sin recompilar el código fuente Java.
+    // =========================================================================
+    @Value("${banco.atm.limite-giro:200000}")
+    private long limiteGiroAtm;
+
+    @Value("${banco.atm.multiplo-billete:5000}")
+    private long multiploBillete;
 
     private final BancoService bancoService;
 
@@ -37,8 +46,8 @@ public class CajeroBffService {
         Cuenta cuenta = bancoService.obtenerCuentaPorId(cuentaId)
                 .orElseThrow(() -> new IllegalArgumentException("Tarjeta o cuenta no válida: " + cuentaId));
 
-        // Delegación de cálculo de límite de giro al servicio de dominio
-        long limiteDisponible = bancoService.calcularLimiteGiroATM(cuentaId, LIMITE_GIRO_ATM);
+        // Delegación de cálculo de límite de giro al servicio de dominio usando límite configurable
+        long limiteDisponible = bancoService.calcularLimiteGiroATM(cuentaId, limiteGiroAtm);
 
         return new ConsultaSaldoCajeroDto(
                 cuenta.getCuentaId(),
@@ -47,19 +56,19 @@ public class CajeroBffService {
                 limiteDisponible,
                 terminalId != null ? terminalId : "ATM-DEFAULT",
                 "ACTIVA".equalsIgnoreCase(cuenta.getEstado()),
-                "Seleccione el monto que desea retirar. Límite máximo por giro: $" + LIMITE_GIRO_ATM
+                "Seleccione el monto que desea retirar. Límite máximo por giro: $" + limiteGiroAtm
         );
     }
 
     public RespuestaRetiroDto procesarRetiroCajero(Long cuentaId, SolicitudRetiroCajeroDto solicitud) {
-        // Delegamos el procesamiento financiero y las reglas bancarias al dominio (BancoService)
+        // Delegamos el procesamiento financiero y las reglas bancarias al dominio usando límites configurables
         Transaccion tx = bancoService.procesarRetiroATM(
                 cuentaId,
                 solicitud.getMonto(),
                 solicitud.getPin(),
                 solicitud.getTerminalId(),
-                LIMITE_GIRO_ATM,
-                MULTIPLO_BILLETE
+                limiteGiroAtm,
+                multiploBillete
         );
 
         Cuenta cuentaActualizada = bancoService.obtenerCuentaPorId(cuentaId)
