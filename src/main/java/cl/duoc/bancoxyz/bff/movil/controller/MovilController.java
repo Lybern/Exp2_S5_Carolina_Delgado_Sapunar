@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,7 +58,7 @@ public class MovilController {
     public ResponseEntity<TransaccionMovilDto> transferir(
             @Parameter(description = "ID de la cuenta origen", example = "101")
             @PathVariable Long cuentaId,
-            @RequestBody SolicitudTransferenciaMovilDto solicitud) {
+            @Valid @RequestBody SolicitudTransferenciaMovilDto solicitud) {
         TransaccionMovilDto respuesta = movilBffService.transferirMovil(cuentaId, solicitud);
         return ResponseEntity.ok(respuesta);
     }

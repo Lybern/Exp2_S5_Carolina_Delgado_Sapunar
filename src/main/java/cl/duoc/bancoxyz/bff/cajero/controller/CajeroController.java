@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,7 +49,7 @@ public class CajeroController {
     public ResponseEntity<RespuestaRetiroDto> procesarRetiro(
             @Parameter(description = "ID de la cuenta", example = "101")
             @PathVariable Long cuentaId,
-            @RequestBody SolicitudRetiroCajeroDto solicitud) {
+            @Valid @RequestBody SolicitudRetiroCajeroDto solicitud) {
         return ResponseEntity.ok(cajeroBffService.procesarRetiroCajero(cuentaId, solicitud));
     }
 }
