@@ -1,217 +1,141 @@
-# Banco XYZ - Arquitectura Backend for Frontend (BFF) con Seguridad Integral
+# Banco XYZ - Arquitectura Backend for Frontend (BFF) Multi-Módulo con Seguridad Integral
 ### Asignatura: Desarrollo Backend III (PBY2203) - Experiencia 2 / Semana 5
 **Autora:** Carolina Delgado Sapunar  
 **Repositorio GitHub:** [https://github.com/Lybern/Exp2_S5_Carolina_Delgado_Sapunar](https://github.com/Lybern/Exp2_S5_Carolina_Delgado_Sapunar)
 
 ---
 
-## 1. Descripción General del Proyecto
-Este proyecto implementa y consolida la arquitectura **Backend for Frontend (BFF)** y **Seguridad Integral** para el sistema financiero del **Banco XYZ**. 
+## 1. Descripción de la Solución
 
-El sistema proporciona capas de servicios especializadas, adaptadas a los requisitos funcionales y restricciones técnicas de cada canal de atención (Web, Móvil, Cajeros Automáticos), incorporando:
-1. **Cifrado en tránsito (HTTPS / TLS):** Certificado digital PKCS12 en puerto seguro **`8443`** con protección de claves criptográficas (`blanquito123`).
-2. **Autenticación y Autorización JWT (Spring Security 6+ / Boot 4+):** Emisión de tokens firmados mediante algoritmo HMAC-SHA256 con protección de audiencia (`aud`) y roles por canal (`ROLE_WEB`, `ROLE_MOVIL`, `ROLE_ATM`, `ROLE_ADMIN`).
-3. **Comunicación Segura entre BFF y Microservicios (Delegated Service Tokens):** Autenticación bidireccional y delegación de contexto mediante clave secreta compartida (`jwt.service-secret`) y cliente moderno `RestClient`.
-4. **Validación Estricta y Manejo Global de Errores:** Validación declarativa con Jakarta Bean Validation (`@Valid`, `@Pattern`, `@NotNull`) y respuestas uniformes `RFC 7807` vía `ResponseEntityExceptionHandler`.
-5. **Generación Concurrente Segura y Normalización Temporal:** IDs thread-safe con `AtomicLong` y fechas estandarizadas en formato ISO-8601 (`java.time.LocalDate`).
+Este proyecto implementa una arquitectura **Backend for Frontend (BFF) Multi-Módulo y Distribuida** para el **Banco XYZ**, desacoplando los canales de atención en microservicios independientes y altamente especializados, comunicados de forma cifrada con el **Core Bancario**:
+
+```
+                                    +-----------------------+
+                                    |   CLIENTES BANCARIOS  |
+                                    +-----------+-----------+
+                                                |
+                 +------------------------------+------------------------------+
+                 | (HTTPS / TLS Puerto 8443)    | (HTTPS / TLS Puerto 8444)    | (HTTPS / TLS Puerto 8445)
+                 v                              v                              v
+        +------------------+           +------------------+           +------------------+
+        |    BFF MOVIL     |           |     BFF WEB      |           |    BFF CAJERO    |
+        |  (Puerto: 8443)  |           |  (Puerto: 8444)  |           |  (Puerto: 8445)  |
+        | * Top 3 Movim.   |           | * Dashboard Web  |           | * Giros $5.000   |
+        | * Payload Ligero |           | * Tasas y Anual  |           | * Valida PIN 4D  |
+        | * aud: "MOVIL"   |           | * aud: "WEB"/CSP |           | * aud: "ATM"     |
+        +--------+---------+           +--------+---------+           +--------+---------+
+                 |                              |                              |
+                 +------------------------------+------------------------------+
+                                                |
+                                                | Token Exchange: Delegated Service Token
+                                                | (Firma: 'jwt.service-secret' | aud: 'core-bancario')
+                                                v
+                                    +-----------------------+
+                                    |     CORE SERVICE      |
+                                    |    (Puerto: 8080)     |
+                                    | * BancoRepository     |
+                                    |   (AtomicLong / Mem)  |
+                                    | * Datos Legacy CSV    |
+                                    | * ServiceTokenFilter  |
+                                    +-----------------------+
+```
 
 ---
 
-## 2. Matriz de Canales, Credenciales y Roles de Seguridad
+## 2. Microservicios del Sistema
 
-| Canal / Tipo | Usuario | Contraseña | Rol Spring Security | Audiencia (`aud`) | Ruta Base |
+| Microservicio | Puerto | Protocolo | Responsabilidad Principal |
+| :--- | :---: | :---: | :--- |
+| **`core-service`** | `8080` | HTTP / ServiceToken | Core transaccional y persistencia legacy (`intereses.csv`, `transacciones.csv`, `cuentas_anuales.csv`). Protegido por `ServiceTokenFilter` con clave secreta compartida. |
+| **`bff-movil`** | `8443` | HTTPS / PKCS12 | BFF exclusivo para smartphones. Respuestas ultraligeras (Top 3 transacciones, transferencias). Protegido por Spring Security con audiencia `MOVIL`. |
+| **`bff-web`** | `8444` | HTTPS / PKCS12 | BFF para navegadores web. Dashboard consolidado de administración, desglose anual con tasas y cabeceras OWASP (CSP, HSTS, `X-Frame-Options: DENY`). Audiencia `WEB`. |
+| **`bff-cajero`** | `8445` | HTTPS / PKCS12 | BFF para cajeros automáticos (ATM). Giros en múltiplos de $5.000, validación regex de PIN de 4 dígitos (`^\d{4}$`) y límites de dispensación. Audiencia `ATM`. |
+
+---
+
+## 3. Matriz de Credenciales y Roles de Seguridad
+
+| Microservicio / Canal | Usuario | Contraseña | Rol Spring Security | Audiencia JWT (`aud`) | URL Swagger UI |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 🌐 **BFF Web** | `usuario_web` | `web123` | `ROLE_WEB` | `WEB` | `/api/v1/web/**` |
-| 📱 **BFF Móvil** | `usuario_movil` | `movil123` | `ROLE_MOVIL` | `MOVIL` | `/api/v1/movil/**` |
-| 🏧 **BFF Cajero ATM** | `operador_atm` | `atm123` | `ROLE_ATM` | `ATM` | `/api/v1/cajero/**` |
-| 👑 **Administrador** | `admin_general` | `admin123` | `ROLE_ADMIN` (todos) | `WEB`, `MOVIL`, `ATM` | Todos los endpoints |
-
-> **Nota de Seguridad:** Las contraseñas se almacenan cifradas con algoritmo **BCrypt** (factor de costo 10). La validación de audiencia (`aud`) previene que un token emitido para la App Móvil sea utilizado fraudulentamente en el Portal Web o en Cajeros Automáticos.
+| 📱 **BFF Móvil** | `usuario_movil` | `movil123` | `ROLE_MOVIL` | `MOVIL` | `https://localhost:8443/swagger-ui/index.html` |
+| 🌐 **BFF Web** | `usuario_web` | `web123` | `ROLE_WEB` | `WEB` | `https://localhost:8444/swagger-ui/index.html` |
+| 🏧 **BFF Cajero ATM** | `operador_atm` | `atm123` | `ROLE_ATM` | `ATM` | `https://localhost:8445/swagger-ui/index.html` |
+| 🏢 **Core Service** | Interno | - | `SERVICE_TOKEN` | `core-bancario` | `http://localhost:8080/swagger-ui/index.html` |
 
 ---
 
-## 3. Arquitectura de Seguridad y Comunicación Bidireccional
+## 4. Instrucciones de Compilación y Ejecución
 
+### 1. Compilar y Ejecutar Pruebas Automatizadas:
+```bash
+./mvnw clean test
 ```
-                              ┌────────────────────────────────────────────────────────┐
-                              │                 CLIENTES BANCARIOS                     │
-                              └───────┬────────────────────────┬───────────────┬───────┘
-                                      │ (1) Login HTTPS / TLS  │               │
-                                      │     Puerto 8443        │               │
-                                      ▼                        ▼               ▼
-                              ┌───────────────┐        ┌───────────────┐ ┌───────────────┐
-                              │   BFF Web     │        │   BFF Móvil   │ │  BFF Cajero   │
-                              │ (/api/v1/web) │        │(/api/v1/movil)│ │(/api/v1/cajero)
-                              └───────┬───────┘        └───────┬───────┘ └───────┬───────┘
-                                      │                        │                 │
-                                      └────────────────────────┼─────────────────┘
-                                                               │ (2) Intercambio de Contexto:
-                                                               │     Genera Service Token
-                                                               │     (aud="core-bancario", iss="bff-*")
-                                                               │     Firma: 'jwt.service-secret'
-                                                               ▼
-                                              ┌─────────────────────────────────┐
-                                              │      CORE BANCARIO CLIENT       │
-                                              │   (RestClient HTTPS / TLS)      │
-                                              └────────────────┬────────────────┘
-                                                               │ (3) Canal HTTPS Cifrado +
-                                                               │     Authorization: Bearer <ServiceToken>
-                                                               ▼
-                                              ┌─────────────────────────────────┐
-                                              │    MICROSERVICIOS / DOMINIO     │
-                                              │  - Validación de firma secreta  │
-                                              │  - Ejecución transaccional      │
-                                              │  - Repositorio concurrente      │
-                                              └─────────────────────────────────┘
-```
+> Ejecuta la suite de pruebas automatizadas en los 4 microservicios con **`BUILD SUCCESS`**.
+
+### 2. Ejecutar los Microservicios:
+Puedes iniciar cada microservicio en terminales independientes:
+
+* **Terminal 1 - Core Service (Puerto 8080):**
+  ```bash
+  ./mvnw spring-boot:run -pl core-service
+  ```
+
+* **Terminal 2 - BFF Móvil (Puerto HTTPS 8443):**
+  ```bash
+  ./mvnw spring-boot:run -pl bff-movil
+  ```
+
+* **Terminal 3 - BFF Web (Puerto HTTPS 8444):**
+  ```bash
+  ./mvnw spring-boot:run -pl bff-web
+  ```
+
+* **Terminal 4 - BFF Cajero ATM (Puerto HTTPS 8445):**
+  ```bash
+  ./mvnw spring-boot:run -pl bff-cajero
+  ```
 
 ---
 
-## 4. Estructura del Código Fuente
+## 5. Ejemplos de Pruebas con cURL
 
-```text
-src/main/java/cl/duoc/bancoxyz/
-├── BancoBffApplication.java              # Clase principal Spring Boot
-├── auth/
-│   └── dto/                             # DTOs de inicio de sesión y Service Tokens
-│       ├── LoginRequestDto.java
-│       ├── LoginResponseDto.java
-│       ├── ServiceTokenRequestDto.java
-│       └── ServiceTokenResponseDto.java
-├── client/                              # Cliente de integración con microservicios
-│   └── CoreBancarioClient.java          # Inyector de Service Tokens vía RestClient
-├── config/                              # Configuraciones centrales
-│   ├── JwtProperties.java               # Mapeo tipado de application.properties
-│   ├── OpenApiConfig.java               # Configuración OpenAPI 3 con Bearer JWT
-│   ├── RestClientConfig.java            # Configuración de RestClient HTTP/HTTPS
-│   ├── SecurityConfig.java              # Cadena de filtros Spring Security, CORS y RBAC
-│   ├── SeguridadCanalesInterceptor.java # Interceptor de auditoría por canal
-│   └── WebMvcConfig.java                # Registro de interceptores Spring MVC
-├── controller/
-│   └── AuthController.java              # Endpoints públicos /api/auth/login y /api/auth/service-token
-├── exception/                           # Gestión global de errores y validación
-│   ├── ErrorRespuestaDto.java           # Formato uniforme RFC 7807
-│   └── ManejadorExcepcionesGlobal.java  # ResponseEntityExceptionHandler y @ExceptionHandler
-├── model/                               # Entidades de dominio bancario
-│   ├── Cuenta.java
-│   ├── MovimientoAnual.java
-│   └── Transaccion.java
-├── repository/                          # Capa de persistencia y carga de datos
-│   ├── BancoRepository.java             # Almacén concurrente thread-safe con AtomicLong
-│   └── CargadorDatosLegacy.java         # Parser de archivos CSV legacy
-├── security/                            # Lógica criptográfica y filtros
-│   ├── JwtAuthenticationFilter.java     # Filtro OncePerRequestFilter con validación de audiencia
-│   └── JwtTokenUtil.java                # Generador/validador JJWT 0.12.6 y Service Tokens
-├── service/                             # Capa de negocio central
-│   └── BancoService.java                # Lógica transaccional de depósitos y retiros
-└── bff/                                 # Módulos Backend for Frontend por canal
-    ├── cajero/                          # 🏧 Módulo Cajero Automático
-    │   ├── controller/CajeroController.java
-    │   ├── dto/ (ConsultaSaldoCajeroDto, SolicitudRetiroCajeroDto, RespuestaRetiroDto)
-    │   └── service/CajeroBffService.java
-    ├── movil/                           # 📱 Módulo App Móvil
-    │   ├── controller/MovilController.java
-    │   ├── dto/ (ResumenCuentaMovilDto, TransaccionMovilDto, SolicitudTransferenciaMovilDto)
-    │   └── service/MovilBffService.java
-    └── web/                             # 🌐 Módulo Portal Web
-        ├── controller/WebController.java
-        ├── dto/ (DashboardWebDto, DetalleCuentaWebDto, TransaccionWebDto)
-        └── service/WebBffService.java
-```
-
----
-
-## 5. Instrucciones de Compilación y Ejecución
-
-### Requisitos Previos:
-* Java JDK 21 o superior.
-* Maven Wrapper (incluido en el repositorio).
-* Certificado digital PKCS12 (`keystore.p12`) ubicado en `src/main/resources/`.
-
-### Comandos de Ejecución:
-1. **Compilar y verificar todas las pruebas automatizadas:**
+### A. Canal Móvil (HTTPS 8443)
+1. **Login Móvil:**
    ```bash
-   ./mvnw clean test
+   curl -k -X POST "https://localhost:8443/api/auth/login" \
+        -H "Content-Type: application/json" \
+        -d '{"username": "usuario_movil", "password": "movil123"}'
    ```
-2. **Ejecutar la aplicación Spring Boot:**
+2. **Consultar Resumen de Cuenta (Top 3 Movimientos):**
    ```bash
-   ./mvnw spring-boot:run
+   curl -k -X GET "https://localhost:8443/api/v1/movil/cuentas/101" \
+        -H "Authorization: Bearer <TOKEN_MOVIL>"
    ```
-3. La aplicación iniciará en el puerto seguro **`8443`** bajo el protocolo **`HTTPS`**.
 
----
+### B. Canal Web (HTTPS 8444)
+1. **Login Web:**
+   ```bash
+   curl -k -X POST "https://localhost:8444/api/auth/login" \
+        -H "Content-Type: application/json" \
+        -d '{"username": "usuario_web", "password": "web123"}'
+   ```
+2. **Consultar Dashboard Global con Métricas:**
+   ```bash
+   curl -k -X GET "https://localhost:8444/api/v1/web/dashboard" \
+        -H "Authorization: Bearer <TOKEN_WEB>"
+   ```
 
-## 6. Documentación Interactiva OpenAPI / Swagger UI
-
-* 🔗 **Swagger UI (HTTPS Seguro):** [https://localhost:8443/swagger-ui/index.html](https://localhost:8443/swagger-ui/index.html)
-* 🔗 **OpenAPI Schema JSON:** [https://localhost:8443/v3/api-docs](https://localhost:8443/v3/api-docs)
-
-> Para interactuar con los endpoints protegidos en Swagger UI, haga clic en el botón **Authorize 🔒**, obtenga un token mediante `/api/auth/login` e ingréselo como `Bearer <token>`.
-
----
-
-## 7. Guía de Pruebas de Endpoints (cURL)
-
-> **Nota:** Debido a que se utiliza un certificado autofirmado en entorno de desarrollo, agregue el parámetro `-k` o `--insecure` en los comandos cURL.
-
-### 1. Autenticación y Obtención de Token JWT
-
-* **Login para Canal Móvil:**
-  ```bash
-  curl -k -X POST "https://localhost:8443/api/auth/login" \
-       -H "Content-Type: application/json" \
-       -d '{"username": "usuario_movil", "password": "movil123", "canal": "MOVIL"}'
-  ```
-
-* **Login para Canal Web:**
-  ```bash
-  curl -k -X POST "https://localhost:8443/api/auth/login" \
-       -H "Content-Type: application/json" \
-       -d '{"username": "usuario_web", "password": "web123", "canal": "WEB"}'
-  ```
-
-* **Login para Operador de Cajero ATM:**
-  ```bash
-  curl -k -X POST "https://localhost:8443/api/auth/login" \
-       -H "Content-Type: application/json" \
-       -d '{"username": "operador_atm", "password": "atm123", "canal": "ATM"}'
-  ```
-
-### 2. Consumo de Endpoints Protegidos por Canal
-
-* **BFF Móvil - Resumen Ligero de Cuenta:**
-  ```bash
-  curl -k -X GET "https://localhost:8443/api/v1/movil/cuentas/101" \
-       -H "Authorization: Bearer <TOKEN_MOVIL>"
-  ```
-
-* **BFF Móvil - Transferencia con Bean Validation:**
-  ```bash
-  curl -k -X POST "https://localhost:8443/api/v1/movil/cuentas/101/transferencia" \
-       -H "Authorization: Bearer <TOKEN_MOVIL>" \
-       -H "Content-Type: application/json" \
-       -d '{"cuentaDestinoId": 102, "monto": 25000, "comentario": "Pago arriendo"}'
-  ```
-
-* **BFF Web - Dashboard Financiero Consolidado:**
-  ```bash
-  curl -k -X GET "https://localhost:8443/api/v1/web/dashboard" \
-       -H "Authorization: Bearer <TOKEN_WEB>"
-  ```
-
-* **BFF Cajero ATM - Retiro de Efectivo (Múltiplos de $5.000 y PIN de 4 dígitos):**
-  ```bash
-  curl -k -X POST "https://localhost:8443/api/v1/cajero/cuentas/101/retiro" \
-       -H "Authorization: Bearer <TOKEN_ATM>" \
-       -H "Content-Type: application/json" \
-       -d '{"monto": 40000, "pin": "1234", "terminalId": "ATM-SCL-CENTRO-01"}'
-  ```
-
-### 3. Emisión de Token Delegado de Servicio (BFF ➔ Core Bancario)
-
-* **Generación de Service Token:**
-  ```bash
-  curl -k -X POST "https://localhost:8443/api/auth/service-token" \
-       -H "Content-Type: application/json" \
-       -d '{"emisorBff": "bff-movil", "username": "usuario_movil"}'
-  ```
+### C. Canal Cajero ATM (HTTPS 8445)
+1. **Login Cajero:**
+   ```bash
+   curl -k -X POST "https://localhost:8445/api/auth/login" \
+        -H "Content-Type: application/json" \
+        -d '{"username": "operador_atm", "password": "atm123"}'
+   ```
+2. **Retiro de Efectivo (PIN 4 dígitos y múltiplos de $5.000):**
+   ```bash
+   curl -k -X POST "https://localhost:8445/api/v1/cajero/cuentas/101/retiro" \
+        -H "Authorization: Bearer <TOKEN_ATM>" \
+        -H "Content-Type: application/json" \
+        -d '{"monto": 40000, "pin": "1234", "terminalId": "ATM-SCL-CENTRO-01"}'
+   ```
