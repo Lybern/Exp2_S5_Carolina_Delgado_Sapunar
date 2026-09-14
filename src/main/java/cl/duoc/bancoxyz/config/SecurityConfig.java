@@ -66,6 +66,20 @@ public class SecurityConfig {
                         // Cualquier otra petición debe estar autenticada
                         .anyRequest().authenticated()
                 )
+                // Configuración de cabeceras de seguridad HTTP para protección del Cliente Web (OWASP Top 10)
+                .headers(headers -> headers
+                        // Previene ataques de Clickjacking impidiendo que el portal web se cargue dentro de iframes
+                        .frameOptions(frame -> frame.deny())
+                        // Previene ataques de MIME-Sniffing obligando al navegador a respetar el Content-Type declarado
+                        .contentTypeOptions(contentType -> {})
+                        // HTTP Strict Transport Security (HSTS): Fuerza al navegador a usar siempre HTTPS
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000))
+                        // Content Security Policy (CSP): Mitiga Cross-Site Scripting (XSS) e inyección de datos
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; script-src 'self'; frame-ancestors 'none'; object-src 'none'"))
+                )
                 // Política de sesión sin estado (Stateless) requerida por el estándar JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Inserción del filtro JWT antes del filtro de usuario/contraseña estándar
