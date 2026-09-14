@@ -1,6 +1,9 @@
 package cl.duoc.bancoxyz.bff.movil.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDate;
 
 @Schema(description = "Representación mínima de un movimiento bancario para la app móvil")
 public class TransaccionMovilDto {
@@ -8,8 +11,13 @@ public class TransaccionMovilDto {
     @Schema(description = "ID de la transacción", example = "5001")
     private Long id;
 
-    @Schema(description = "Fecha de la operación", example = "2024-03-01")
-    private String fecha;
+    // =========================================================================
+    // NORMALIZACIÓN TEMPORAL (java.time.LocalDate):
+    // Serialización consistente en formato ISO-8601 (yyyy-MM-dd) para app móvil
+    // =========================================================================
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @Schema(description = "Fecha de la operación en formato ISO-8601", example = "2024-03-01")
+    private LocalDate fecha;
 
     @Schema(description = "Monto en pesos (positivo para abono, negativo para cargo)", example = "-15000")
     private Long monto;
@@ -23,7 +31,7 @@ public class TransaccionMovilDto {
     public TransaccionMovilDto() {
     }
 
-    public TransaccionMovilDto(Long id, String fecha, Long monto, String tipo, String descripcion) {
+    public TransaccionMovilDto(Long id, LocalDate fecha, Long monto, String tipo, String descripcion) {
         this.id = id;
         this.fecha = fecha;
         this.monto = monto;
@@ -39,11 +47,11 @@ public class TransaccionMovilDto {
         this.id = id;
     }
 
-    public String getFecha() {
+    public LocalDate getFecha() {
         return fecha;
     }
 
-    public void setFecha(String fecha) {
+    public void setFecha(LocalDate fecha) {
         this.fecha = fecha;
     }
 

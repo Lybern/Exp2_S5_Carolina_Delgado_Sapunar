@@ -1,6 +1,9 @@
 package cl.duoc.bancoxyz.bff.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDate;
 
 @Schema(description = "Detalle extendido de una transacción para la plataforma Web")
 public class TransaccionWebDto {
@@ -8,8 +11,13 @@ public class TransaccionWebDto {
     @Schema(description = "Identificador de la transacción", example = "5001")
     private Long id;
 
-    @Schema(description = "Fecha de emisión", example = "2024-03-01")
-    private String fecha;
+    // =========================================================================
+    // NORMALIZACIÓN TEMPORAL (java.time.LocalDate):
+    // Serialización consistente en formato ISO-8601 (yyyy-MM-dd)
+    // =========================================================================
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @Schema(description = "Fecha de emisión en formato estándar ISO-8601", example = "2024-03-01")
+    private LocalDate fecha;
 
     @Schema(description = "Monto de la transacción", example = "15000")
     private Long monto;
@@ -29,7 +37,7 @@ public class TransaccionWebDto {
     public TransaccionWebDto() {
     }
 
-    public TransaccionWebDto(Long id, String fecha, Long monto, String tipo, String descripcion, String canalOrigen, String categoria) {
+    public TransaccionWebDto(Long id, LocalDate fecha, Long monto, String tipo, String descripcion, String canalOrigen, String categoria) {
         this.id = id;
         this.fecha = fecha;
         this.monto = monto;
@@ -47,11 +55,11 @@ public class TransaccionWebDto {
         this.id = id;
     }
 
-    public String getFecha() {
+    public LocalDate getFecha() {
         return fecha;
     }
 
-    public void setFecha(String fecha) {
+    public void setFecha(LocalDate fecha) {
         this.fecha = fecha;
     }
 

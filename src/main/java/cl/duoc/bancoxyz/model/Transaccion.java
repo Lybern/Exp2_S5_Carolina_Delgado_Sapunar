@@ -1,10 +1,24 @@
 package cl.duoc.bancoxyz.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDate;
+
 public class Transaccion {
 
     private Long id;
     private Long cuentaId;
-    private String fecha;
+
+    // =========================================================================
+    // NORMALIZACIÓN TEMPORAL (java.time.LocalDate):
+    // Garantiza representación temporal homogénea e inmutable.
+    // Serialización uniforme en formato estándar internacional ISO-8601 (yyyy-MM-dd).
+    // =========================================================================
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @Schema(description = "Fecha de la transacción en formato ISO-8601", example = "2024-06-15")
+    private LocalDate fecha;
+
     private Long monto;
     private String tipo;
     private String descripcion;
@@ -13,7 +27,7 @@ public class Transaccion {
     public Transaccion() {
     }
 
-    public Transaccion(Long id, Long cuentaId, String fecha, Long monto, String tipo, String descripcion, String canal) {
+    public Transaccion(Long id, Long cuentaId, LocalDate fecha, Long monto, String tipo, String descripcion, String canal) {
         this.id = id;
         this.cuentaId = cuentaId;
         this.fecha = fecha;
@@ -39,11 +53,11 @@ public class Transaccion {
         this.cuentaId = cuentaId;
     }
 
-    public String getFecha() {
+    public LocalDate getFecha() {
         return fecha;
     }
 
-    public void setFecha(String fecha) {
+    public void setFecha(LocalDate fecha) {
         this.fecha = fecha;
     }
 

@@ -1,9 +1,22 @@
 package cl.duoc.bancoxyz.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDate;
+
 public class MovimientoAnual {
 
     private Long cuentaId;
-    private String fecha;
+
+    // =========================================================================
+    // NORMALIZACIÓN TEMPORAL (java.time.LocalDate):
+    // Formato homogéneo ISO-8601 para movimientos anuales e históricos.
+    // =========================================================================
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @Schema(description = "Fecha del movimiento en formato ISO-8601", example = "2024-01-15")
+    private LocalDate fecha;
+
     private String transaccion;
     private Long monto;
     private String descripcion;
@@ -11,7 +24,7 @@ public class MovimientoAnual {
     public MovimientoAnual() {
     }
 
-    public MovimientoAnual(Long cuentaId, String fecha, String transaccion, Long monto, String descripcion) {
+    public MovimientoAnual(Long cuentaId, LocalDate fecha, String transaccion, Long monto, String descripcion) {
         this.cuentaId = cuentaId;
         this.fecha = fecha;
         this.transaccion = transaccion;
@@ -27,11 +40,11 @@ public class MovimientoAnual {
         this.cuentaId = cuentaId;
     }
 
-    public String getFecha() {
+    public LocalDate getFecha() {
         return fecha;
     }
 
-    public void setFecha(String fecha) {
+    public void setFecha(LocalDate fecha) {
         this.fecha = fecha;
     }
 

@@ -110,7 +110,7 @@ public class BancoService {
         Transaccion tx = new Transaccion(
                 nuevoIdTransaccion,
                 cuentaId,
-                LocalDate.now().toString(),
+                LocalDate.now(),
                 monto,
                 "retiro",
                 detalleTerminal != null ? detalleTerminal : "Retiro de efectivo en " + canal,
@@ -137,7 +137,7 @@ public class BancoService {
         Transaccion tx = new Transaccion(
                 nuevoIdTransaccion,
                 cuentaId,
-                LocalDate.now().toString(),
+                LocalDate.now(),
                 monto,
                 "abono",
                 "Depósito de fondos vía " + canal,
@@ -178,7 +178,7 @@ public class BancoService {
         Transaccion txOrigen = new Transaccion(
                 idTxOrigen,
                 cuentaOrigenId,
-                LocalDate.now().toString(),
+                LocalDate.now(),
                 monto,
                 "transferencia_saliente",
                 descripcion != null ? descripcion : "Transferencia a cuenta " + cuentaDestinoId,
@@ -189,7 +189,7 @@ public class BancoService {
         Transaccion txDestino = new Transaccion(
                 idTxDestino,
                 cuentaDestinoId,
-                LocalDate.now().toString(),
+                LocalDate.now(),
                 monto,
                 "transferencia_entrante",
                 "Transferencia recibida desde cuenta " + cuentaOrigenId,
