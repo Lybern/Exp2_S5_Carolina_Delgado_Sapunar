@@ -1,0 +1,403 @@
+{
+	"info": {
+		"_postman_id": "banco-xyz-bff-collection-v5",
+		"name": "Banco XYZ - Arquitectura BFF & Seguridad (Exp2 S5)",
+		"description": "Colección completa de pruebas para la arquitectura Backend for Frontend (BFF) de Banco XYZ con Spring Security, JWT y HTTPS.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01. BFF Móvil (Puerto 8443 - HTTPS)",
+			"item": [
+				{
+					"name": "1.1 Login Móvil (Generar JWT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"usuario_movil\",\n  \"password\": \"movil123\"\n}"
+						},
+						"url": {
+							"raw": "https://localhost:8443/api/auth/login",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8443",
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "1.2 Resumen de Cuenta Móvil (Protegido)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_movil}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/api/v1/movil/cuentas/1",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8443",
+							"path": ["api", "v1", "movil", "cuentas", "1"]
+						}
+					}
+				},
+				{
+					"name": "1.3 Consulta Rápida de Saldo Móvil",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_movil}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/api/v1/movil/cuentas/1/saldo",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8443",
+							"path": ["api", "v1", "movil", "cuentas", "1", "saldo"]
+						}
+					}
+				},
+				{
+					"name": "1.4 Transferencia Rápida Exitosa",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_movil}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cuentaDestinoId\": 2,\n  \"monto\": 15000,\n  \"comentario\": \"Pago de almuerzo\"\n}"
+						},
+						"url": {
+							"raw": "https://localhost:8443/api/v1/movil/cuentas/1/transferencia",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8443",
+							"path": ["api", "v1", "movil", "cuentas", "1", "transferencia"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "02. BFF Web (Puerto 8444 - HTTPS)",
+			"item": [
+				{
+					"name": "2.1 Login Web (Generar JWT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"usuario_web\",\n  \"password\": \"web123\"\n}"
+						},
+						"url": {
+							"raw": "https://localhost:8444/api/auth/login",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8444",
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "2.2 Dashboard Global Web (Protegido)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_web}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8444/api/v1/web/dashboard",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8444",
+							"path": ["api", "v1", "web", "dashboard"]
+						}
+					}
+				},
+				{
+					"name": "2.3 Detalle Completo Cuenta Web",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_web}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8444/api/v1/web/cuentas/1",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8444",
+							"path": ["api", "v1", "web", "cuentas", "1"]
+						}
+					}
+				},
+				{
+					"name": "2.4 Historial Completo Transacciones Web",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_web}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8444/api/v1/web/cuentas/1/transacciones",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8444",
+							"path": ["api", "v1", "web", "cuentas", "1", "transacciones"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "03. BFF Cajero ATM (Puerto 8445 - HTTPS)",
+			"item": [
+				{
+					"name": "3.1 Login Cajero ATM (Generar JWT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"usuario_cajero\",\n  \"password\": \"cajero123\"\n}"
+						},
+						"url": {
+							"raw": "https://localhost:8445/api/auth/login",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8445",
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "3.2 Consulta Saldo ATM",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_cajero}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8445/api/v1/cajero/cuentas/1/saldo",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8445",
+							"path": ["api", "v1", "cajero", "cuentas", "1", "saldo"]
+						}
+					}
+				},
+				{
+					"name": "3.3 Giro en Efectivo Exitoso (Múltiplo $5.000 + PIN)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_cajero}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"monto\": 20000,\n  \"pin\": \"1234\",\n  \"terminalId\": \"ATM-01\"\n}"
+						},
+						"url": {
+							"raw": "https://localhost:8445/api/v1/cajero/cuentas/1/retiro",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8445",
+							"path": ["api", "v1", "cajero", "cuentas", "1", "retiro"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "04. Pruebas de Seguridad y Excepciones (Profesor Marcelo)",
+			"item": [
+				{
+					"name": "4.1 Prueba TLS (HTTP no seguro vs Puerto HTTPS)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8443/api/v1/movil/cuentas/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8443",
+							"path": ["api", "v1", "movil", "cuentas", "1"]
+						}
+					}
+				},
+				{
+					"name": "4.2 Acceso No Autorizado Sin Token (401 Unauthorized)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/api/v1/movil/cuentas/1",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8443",
+							"path": ["api", "v1", "movil", "cuentas", "1"]
+						}
+					}
+				},
+				{
+					"name": "4.3 Bean Validation Error (Monto Negativo en Transferencia)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_movil}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cuentaDestinoId\": 2,\n  \"monto\": -5000,\n  \"comentario\": \"Invalido\"\n}"
+						},
+						"url": {
+							"raw": "https://localhost:8443/api/v1/movil/cuentas/1/transferencia",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8443",
+							"path": ["api", "v1", "movil", "cuentas", "1", "transferencia"]
+						}
+					}
+				},
+				{
+					"name": "4.4 Bean Validation Error (PIN Inválido en Cajero ATM)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_cajero}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"monto\": 20000,\n  \"pin\": \"12A\",\n  \"terminalId\": \"ATM-01\"\n}"
+						},
+						"url": {
+							"raw": "https://localhost:8445/api/v1/cajero/cuentas/1/retiro",
+							"protocol": "https",
+							"host": ["localhost"],
+							"port": "8445",
+							"path": ["api", "v1", "cajero", "cuentas", "1", "retiro"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

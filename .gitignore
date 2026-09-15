@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Documents and Artifacts ###
+*.docx
+*.pdf
+*.zip
+*.py
+diagramas/
+~$*

@@ -58,12 +58,17 @@ public class SecurityConfig {
                 .roles("ATM")
                 .build();
 
+        UserDetails userCajero = User.withUsername("usuario_cajero")
+                .password(passwordEncoder.encode("cajero123"))
+                .roles("ATM")
+                .build();
+
         UserDetails admin = User.withUsername("admin_general")
                 .password(passwordEncoder.encode("admin123"))
                 .roles("ADMIN", "ATM")
                 .build();
 
-        return new InMemoryUserDetailsManager(userAtm, admin);
+        return new InMemoryUserDetailsManager(userAtm, userCajero, admin);
     }
 
     @Bean
