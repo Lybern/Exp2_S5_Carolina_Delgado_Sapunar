@@ -120,7 +120,7 @@ Todas las pruebas del sistema se ejecutan y validan a través de **Postman** uti
 * **Respuesta Esperada (`HTTP 200 OK`):**
   ```json
   {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "token": "...",
     "tipoToken": "Bearer",
     "username": "usuario_movil",
     "rol": "ROLE_MOVIL",
