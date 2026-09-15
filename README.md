@@ -116,11 +116,7 @@ Todas las pruebas del sistema se ejecutan y validan a través de **Postman** uti
 * **Headers:** `Content-Type: application/json`
 * **Body (raw JSON):**
   ```json
-  {
-    "username": "usuario_movil",
-    "password": "movil123"
-  }
-  ```
+
 * **Respuesta Esperada (`HTTP 200 OK`):**
   ```json
   {
@@ -155,12 +151,7 @@ Todas las pruebas del sistema se ejecutan y validan a través de **Postman** uti
 * **URL:** `https://localhost:8444/api/auth/login`
 * **Headers:** `Content-Type: application/json`
 * **Body (raw JSON):**
-  ```json
-  {
-    "username": "usuario_web",
-    "password": "web123"
-  }
-  ```
+ 
 * **Respuesta Esperada (`HTTP 200 OK`):** Emite token JWT con audiencia `aud: "WEB"`, guardado en la variable `{{jwt_web}}`.
 
 #### 2. Request 5: Consultar Dashboard Global con Métricas (50 Cuentas)
@@ -184,12 +175,7 @@ Todas las pruebas del sistema se ejecutan y validan a través de **Postman** uti
 * **URL:** `https://localhost:8445/api/auth/login`
 * **Headers:** `Content-Type: application/json`
 * **Body (raw JSON):**
-  ```json
-  {
-    "username": "usuario_cajero",
-    "password": "cajero123"
-  }
-  ```
+
 * **Respuesta Esperada (`HTTP 200 OK`):** Emite token JWT con audiencia `aud: "ATM"`, guardado en la variable `{{jwt_atm}}`.
 
 #### 2. Request 8: Consulta de Saldo en ATM
@@ -206,24 +192,8 @@ Todas las pruebas del sistema se ejecutan y validan a través de **Postman** uti
   * `Content-Type: application/json`
 * **Body (raw JSON):**
   ```json
-  {
-    "monto": 40000,
-    "pin": "1234",
-    "terminalId": "ATM-SCL-CENTRO-01"
-  }
   ```
 * **Respuesta Esperada (`HTTP 200 OK`):**
-  ```json
-  {
-    "cuentaId": 102,
-    "montoRetirado": 40000.0,
-    "saldoRestante": 272000.0,
-    "terminalId": "ATM-SCL-CENTRO-01",
-    "fechaHora": "2026-09-14T15:30:00",
-    "estado": "TRANSACCION_EXITOSA"
-  }
-  ```
-
 ---
 
 ### D. Casos de Seguridad y Validaciones
@@ -251,11 +221,6 @@ Todas las pruebas del sistema se ejecutan y validan a través de **Postman** uti
 * **Headers:** `Authorization: Bearer {{jwt_atm}}`, `Content-Type: application/json`
 * **Body (raw JSON):**
   ```json
-  {
-    "monto": 40000,
-    "pin": "1234"
-  }
-  ```
   *(Se omite el campo obligatorio `terminalId`)*
 * **Resultado:** `HTTP 400 Bad Request`
   ```json
